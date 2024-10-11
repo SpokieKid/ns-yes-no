@@ -1,47 +1,5 @@
 [
     {
-        "content_id": 6,
-        "content": "内容项 6",
-        "metadata": "元数据 6",
-        "category": "category1"
-    },
-    {
-        "content_id": 7,
-        "content": "内容项 7",
-        "metadata": "元数据 7",
-        "category": "category1"
-    },
-    {
-        "content_id": 8,
-        "content": "内容项 8",
-        "metadata": "元数据 8",
-        "category": "category1"
-    },
-    {
-        "content_id": 9,
-        "content": "内容项 9",
-        "metadata": "元数据 9",
-        "category": "category1"
-    },
-    {
-        "content_id": 10,
-        "content": "内容项 10",
-        "metadata": "元数据 10",
-        "category": "category1"
-    },
-    {
-        "content_id": 11,
-        "content": "内容项 11",
-        "metadata": "元数据 11",
-        "category": "category1"
-    },
-    {
-        "content_id": 12,
-        "content": "内容项 12",
-        "metadata": "元数据 12",
-        "category": "category1"
-    },
-    {
         "content_id": 13,
         "content": "内容项 13",
         "metadata": "元数据 13",

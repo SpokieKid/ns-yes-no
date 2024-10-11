@@ -5,17 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数据快速排序</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <style>
+        .card {
+            transition: transform 0.3s, opacity 0.3s;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+        .card:nth-child(1) { z-index: 3; }
+        .card:nth-child(2) { z-index: 2; transform: scale(0.95) translateY(16px); }
+        .card:nth-child(3) { z-index: 1; transform: scale(0.90) translateY(32px); }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
-        <div id="content" class="mb-6">
-            <div class="animate-pulse">
-                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div class="h-4 bg-gray-200 rounded w-5/6"></div>
-            </div>
+    <div class="max-w-md w-full">
+        <div id="card-container" class="relative h-64">
+            <!-- Cards will be dynamically added here -->
         </div>
-        <div class="flex justify-center space-x-4">
+        <div class="flex justify-center space-x-4 mt-20">
             <button id="yes-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
                 YES
             </button>
@@ -27,32 +36,54 @@
 
     <script>
         let preloadedItems = [];
-        let currentItemIndex = 0;
-        const category = '{{ category }}'; // 从 Flask 传递的类别
+        const category = '{{ category }}';
+        const cardContainer = document.getElementById('card-container');
 
         function loadItems() {
             fetch(`/get_items/${category}`)
                 .then(response => response.json())
                 .then(data => {
                     preloadedItems = data.items;
-                    displayCurrentItem();
+                    displayCards();
                 });
         }
 
-        function displayCurrentItem() {
-            const contentElement = document.getElementById('content');
-            if (currentItemIndex < preloadedItems.length) {
-                const item = preloadedItems[currentItemIndex];
-                contentElement.innerHTML = `
-                    <p class="text-gray-700 text-lg">${item.content}</p>
-                `;
-                document.getElementById('yes-btn').onclick = () => submitResponse('YES', item.content_id);
-                document.getElementById('no-btn').onclick = () => submitResponse('NO', item.content_id);
-            } else {
-                contentElement.innerHTML = '<p class="text-gray-700">没有更多项目了。</p>';
-                document.getElementById('yes-btn').disabled = true;
-                document.getElementById('no-btn').disabled = true;
-            }
+        function displayCards() {
+            cardContainer.innerHTML = '';
+            preloadedItems.forEach((item, index) => {
+                const card = createCard(item, index);
+                cardContainer.appendChild(card);
+                if (index === 0) {
+                    setupSwipe(card);
+                }
+            });
+        }
+
+        function createCard(item, index) {
+            const card = document.createElement('div');
+            card.className = `card bg-white rounded-lg shadow-lg p-6 mb-6`;
+            card.innerHTML = `<p class="text-gray-700 text-lg">${item.content}</p>`;
+            card.dataset.contentId = item.content_id;
+            return card;
+        }
+
+        function setupSwipe(card) {
+            const hammer = new Hammer(card);
+
+            hammer.on('pan', (event) => {
+                const percentage = event.deltaX / 250;
+                card.style.transform = `translateX(${event.deltaX}px) rotate(${percentage * 25}deg)`;
+
+                if (event.isFinal) {
+                    if (event.deltaX > 100) {
+                        submitResponse('YES', card.dataset.contentId);
+                    } else if (event.deltaX < -100) {
+                        submitResponse('NO', card.dataset.contentId);
+                    } else {
+                        card.style.transform = '';
+                    }
+                }
+            });
         }
 
         function submitResponse(action, contentId) {
@@ -67,11 +98,14 @@
             })
             .then(response => response.json())
             .then(data => {
-                preloadedItems = preloadedItems.slice(currentItemIndex + 1).concat(data.new_items);
-                currentItemIndex = 0;
-                displayCurrentItem();
+                preloadedItems.shift();
+                preloadedItems = preloadedItems.concat(data.new_items);
+                displayCards();
             });
         }
+
+        document.getElementById('yes-btn').onclick = () => submitResponse('YES', preloadedItems[0].content_id);
+        document.getElementById('no-btn').onclick = () => submitResponse('NO', preloadedItems[0].content_id);
 
         window.onload = loadItems;
     </script>
