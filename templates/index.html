@@ -7,28 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
+        .card-stack {
+            perspective: 1000px;
+            transform-style: preserve-3d;
+        }
         .card {
             transition: transform 0.3s, opacity 0.3s;
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
+            backface-visibility: hidden;
+            transform-origin: top center;
         }
         .card:nth-child(1) { z-index: 3; }
-        .card:nth-child(2) { z-index: 2; transform: scale(0.95) translateY(16px); }
-        .card:nth-child(3) { z-index: 1; transform: scale(0.90) translateY(32px); }
+        .card:nth-child(2) { z-index: 2; transform: translateY(10px) scale(0.98); }
+        .card:nth-child(3) { z-index: 1; transform: translateY(20px) scale(0.96); }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="max-w-md w-full">
-        <div id="card-container" class="relative h-64">
+    <div class="max-w-md w-full px-4">
+        <div id="card-container" class="card-stack relative h-80 mb-20">
             <!-- Cards will be dynamically added here -->
         </div>
-        <div class="flex justify-center space-x-4 mt-20">
-            <button id="yes-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
+        <div class="flex justify-center space-x-4">
+            <button id="yes-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
                 YES
             </button>
-            <button id="no-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
+            <button id="no-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
                 NO
             </button>
         </div>
@@ -61,8 +67,8 @@
 
         function createCard(item, index) {
             const card = document.createElement('div');
-            card.className = `card bg-white rounded-lg shadow-lg p-6 mb-6`;
-            card.innerHTML = `<p class="text-gray-700 text-lg">${item.content}</p>`;
+            card.className = `card bg-white rounded-2xl shadow-xl p-6 mb-6 flex items-center justify-center`;
+            card.innerHTML = `<p class="text-gray-700 text-xl text-center">${item.content}</p>`;
             card.dataset.contentId = item.content_id;
             return card;
         }
@@ -73,6 +79,7 @@
             hammer.on('pan', (event) => {
                 const percentage = event.deltaX / 250;
                 card.style.transform = `translateX(${event.deltaX}px) rotate(${percentage * 25}deg)`;
+                card.style.opacity = 1 - Math.abs(percentage);
 
                 if (event.isFinal) {
                     if (event.deltaX > 100) {
@@ -81,6 +88,7 @@
                         submitResponse('NO', card.dataset.contentId);
                     } else {
                         card.style.transform = '';
+                        card.style.opacity = 1;
                     }
                 }
             });
@@ -110,4 +118,5 @@
         window.onload = loadItems;
     </script>
 </body>
+</html>
 </html>
