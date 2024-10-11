@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据快速排序</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+        <div id="content" class="mb-6">
+            <div class="animate-pulse">
+                <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+        </div>
+        <div class="flex justify-center space-x-4">
+            <button id="yes-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
+                YES
+            </button>
+            <button id="no-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 ease-in-out transform hover:scale-105">
+                NO
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let preloadedItems = [];
+        let currentItemIndex = 0;
+        const category = '{{ category }}'; // 从 Flask 传递的类别
+
+        function loadItems() {
+            fetch(`/get_items/${category}`)
+                .then(response => response.json())
+                .then(data => {
+                    preloadedItems = data.items;
+                    displayCurrentItem();
+                });
+        }
+
+        function displayCurrentItem() {
+            const contentElement = document.getElementById('content');
+            if (currentItemIndex < preloadedItems.length) {
+                const item = preloadedItems[currentItemIndex];
+                contentElement.innerHTML = `
+                    <p class="text-gray-700 text-lg">${item.content}</p>
+                `;
+                document.getElementById('yes-btn').onclick = () => submitResponse('YES', item.content_id);
+                document.getElementById('no-btn').onclick = () => submitResponse('NO', item.content_id);
+            } else {
+                contentElement.innerHTML = '<p class="text-gray-700">没有更多项目了。</p>';
+                document.getElementById('yes-btn').disabled = true;
+                document.getElementById('no-btn').disabled = true;
+            }
+        }
+
+        function submitResponse(action, contentId) {
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('content_id', contentId);
+            formData.append('category', category);
+
+            fetch('/submit_response', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                preloadedItems = preloadedItems.slice(currentItemIndex + 1).concat(data.new_items);
+                currentItemIndex = 0;
+                displayCurrentItem();
+            });
+        }
+
+        window.onload = loadItems;
+    </script>
+</body>
+</html>
