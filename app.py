@@ -6,15 +6,16 @@ logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 
+@app.route('/')
 @app.route('/<category>')
-def category_page(category):
+def category_page(category='category1'):
     return render_template('index.html', category=category)
 
 @app.route('/get_items/<category>')
 def get_items(category):
     data = load_data()
-    items = [item for item in data if item['category'] == category][:3]  # 修改为获取3个项目
-    return jsonify({'items': items})
+    items = [item for item in data if item['category'] == category]
+    return jsonify({'items': items[:10]})
 
 @app.route('/submit_response', methods=['POST'])
 def submit_response():
@@ -22,14 +23,14 @@ def submit_response():
     content_id = int(request.form.get('content_id'))
     category = request.form.get('category')
     
-    print(f'内容ID: {content_id}, 用户动作: {action}')
+    logging.debug(f'Content ID: {content_id}, User action: {action}')
 
     data = load_data()
     data = [item for item in data if item['content_id'] != content_id]
 
     remaining_items = [item for item in data if item['category'] == category]
 
-    new_items = remaining_items[:3] if remaining_items else []  # 返回最多3个新项目
+    new_items = remaining_items[:10]
     
     save_data(data)
 
@@ -38,17 +39,20 @@ def submit_response():
 def load_data():
     try:
         with open('data.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+        logging.debug(f"Loaded {len(data)} items from data.json")
+        return data
     except json.JSONDecodeError as e:
-        logging.error(f"JSON 解码错误: {e}")
+        logging.error(f"JSON decoding error: {e}")
         raise
     except IOError as e:
-        logging.error(f"文件 I/O 错误: {e}")
+        logging.error(f"File I/O error: {e}")
         raise
 
 def save_data(data):
     with open('data.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+    logging.debug(f"Saved {len(data)} items to data.json")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(debug=True, host='0.0.0.0', port=8080)

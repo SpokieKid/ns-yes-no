@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>数据快速排序</title>
+    <title>NS Content Tinder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
@@ -78,38 +78,48 @@
 
             hammer.on('pan', (event) => {
                 const percentage = event.deltaX / 250;
-                card.style.transform = `translateX(${event.deltaX}px) rotate(${percentage * 25}deg)`;
-                card.style.opacity = 1 - Math.abs(percentage);
+                animateCard(card, percentage * 250, -percentage * 25, 1 - Math.abs(percentage));
 
                 if (event.isFinal) {
-                    if (event.deltaX > 100) {
+                    if (event.deltaX < -100) {
                         submitResponse('YES', card.dataset.contentId);
-                    } else if (event.deltaX < -100) {
+                    } else if (event.deltaX > 100) {
                         submitResponse('NO', card.dataset.contentId);
                     } else {
-                        card.style.transform = '';
-                        card.style.opacity = 1;
+                        animateCard(card, 0, 0, 1);
                     }
                 }
             });
         }
 
-        function submitResponse(action, contentId) {
-            const formData = new FormData();
-            formData.append('action', action);
-            formData.append('content_id', contentId);
-            formData.append('category', category);
+        function animateCard(card, translateX, rotate, opacity) {
+            card.style.transform = `translateX(${translateX}px) rotate(${rotate}deg)`;
+            card.style.opacity = opacity;
+        }
 
-            fetch('/submit_response', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                preloadedItems.shift();
-                preloadedItems = preloadedItems.concat(data.new_items);
-                displayCards();
-            });
+        function submitResponse(action, contentId) {
+            const card = cardContainer.firstChild;
+            const direction = action === 'YES' ? -1 : 1;
+            
+            animateCard(card, direction * 1000, -direction * 45, 0);
+
+            setTimeout(() => {
+                const formData = new FormData();
+                formData.append('action', action);
+                formData.append('content_id', contentId);
+                formData.append('category', category);
+
+                fetch('/submit_response', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    preloadedItems.shift();
+                    preloadedItems = preloadedItems.concat(data.new_items);
+                    displayCards();
+                });
+            }, 300);
         }
 
         document.getElementById('yes-btn').onclick = () => submitResponse('YES', preloadedItems[0].content_id);
@@ -118,5 +128,4 @@
         window.onload = loadItems;
     </script>
 </body>
-</html>
 </html>
